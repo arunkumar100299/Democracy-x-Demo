@@ -12,7 +12,7 @@ import {
   useMaterialReactTable,
 } from 'material-react-table';
 
-const Table = ({ columns, data }) => {
+const Table = ({ columns, data, handleDelete }) => {
   const table = useMaterialReactTable({
     columns,
     data,
@@ -23,14 +23,14 @@ const Table = ({ columns, data }) => {
     enableRowActions: true,
     renderRowActionMenuItems: ({ row }) => [
       <Box>
-        <div>
+        {/* <div>
           <IconButton onClick={() => console.info('Edit')}>
             <EditIcon sx={{ color: 'green' }} />
             <Typography sx={{ ml: 1 }}>Edit</Typography>
           </IconButton>
-        </div>
+        </div> */}
         <div>
-          <IconButton onClick={() => console.info('Delete')}>
+          <IconButton onClick={() => handleDelete(row.original.id)}>
             <DeleteIcon sx={{ color: 'red' }} />
             <Typography sx={{ ml: 1 }}>Delete</Typography>
           </IconButton>

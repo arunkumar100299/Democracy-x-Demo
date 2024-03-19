@@ -33,6 +33,7 @@ import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Button from '@mui/material/Button';
 import { useNavigate } from 'react-router-dom';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 const drawerWidth = 240;
 // Define your theme
@@ -56,12 +57,14 @@ const menuOptions = [
     title: 'Home',
     path: '/sellerHomePage',
     disabled: false,
+    subTitle: [],
   },
   {
     icon: Orders,
     title: 'Orders',
     path: '',
     disabled: true,
+    subTitle: [],
   },
   {
     icon: Products,
@@ -88,6 +91,7 @@ const menuOptions = [
     title: 'Customers',
     path: '/customers',
     disabled: true,
+    subTitle: [],
   },
   {
     icon: Content,
@@ -108,6 +112,7 @@ const menuOptions = [
     title: 'Analytics',
     path: '/analytics',
     disabled: true,
+    subTitle: [],
   },
 
   {
@@ -115,12 +120,14 @@ const menuOptions = [
     title: 'Marketing',
     path: '/marketing',
     disabled: true,
+    subTitle: [],
   },
   {
     icon: Discounts,
     title: 'Discounts',
     path: '/discounts',
     disabled: true,
+    subTitle: [],
   },
 ];
 
@@ -185,11 +192,15 @@ const Sidebar = () => {
                       <Stack
                         onClick={(e) => handleClick(index)}
                         direction="row"
-                        spacing={1}
+                        spacing={-0.5}
                         sx={{
                           justifyContent: menu ? 'start' : 'center',
-                          m: menu ? '0px' : '20px',
-                          p: menu ? '0px' : '5px',
+                          alignItems: 'center',
+                          width: menu ? '230px' : '38px',
+                          height: menu ? '32px' : '30px',
+                          m: menu ? '6px' : '20px',
+                          ml: menu ? '12px' : '18px',
+                          p: menu ? '20px' : '5px',
                           pl: menu ? '30px !important' : '5px !important',
                           backgroundColor: path === data.path ? 'white' : '',
                           color:
@@ -213,7 +224,9 @@ const Sidebar = () => {
                         <Tooltip title={data.title} arrow placement="right">
                           <img
                             src={data.icon}
-                            // style={{ marginTop: menu ? '0px' : '20px' }}
+                            style={{
+                              height: menu ? '20px' : '20px',
+                            }}
                             alt="item"
                           />
                         </Tooltip>
@@ -226,9 +239,14 @@ const Sidebar = () => {
                           >
                             <ListItem key={index} component={Link} to="">
                               <ListItemText
-                                sx={{ color: 'black' }}
+                                sx={{ color: 'black', mr: 1 }}
                                 primary={data.title}
                               />
+                              {data.subTitle?.length ? (
+                                <KeyboardArrowDownIcon />
+                              ) : (
+                                ''
+                              )}
                             </ListItem>
                           </NavLink>
                         ) : (
@@ -308,7 +326,7 @@ const Sidebar = () => {
             overflowY: 'auto',
             overflowX: 'hidden',
             mt: 10,
-            ml: menu?40:25,
+            ml: menu ? 40 : 25,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'flex-start',

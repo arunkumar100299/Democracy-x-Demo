@@ -11,6 +11,7 @@ import {
   Typography,
   Container,
   Checkbox,
+  Chip,
 } from '@mui/material';
 import Home from '../../assets/images/sidebar/Home.svg';
 import Orders from '../../assets/images/sidebar/Orders.svg';
@@ -34,6 +35,9 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Button from '@mui/material/Button';
 import { useNavigate } from 'react-router-dom';
 import Table from '../../components/Table';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import Loader from '../../components/Loader';
+import useSnackbarHook from '../../customHooks/useSnackbarHook';
 
 const drawerWidth = 240;
 // Define your theme
@@ -158,44 +162,53 @@ const ProductSidebar = () => {
   const [openSubMenu, setOpenSubMenu] = useState(-1);
   const navigate = useNavigate();
   const [productsData, setProductsData] = useState([]);
-
+  const [loaderTime, setLoaderTime] = useState(false);
+  const { showSuccessMsg, showErrorMsg } = useSnackbarHook();
   const [path, setPath] = useState();
   useEffect(() => {
     setPath(window.location.pathname);
   }, [path]);
 
+  const productsFetchData = async () => {
+    try {
+      const response = await fetch('http://localhost:4002/products', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const responseData = await response.json();
+      console.log(responseData.data, 'responseData');
+      setProductsData(responseData.data);
+      setTimeout(() => {
+        setLoaderTime(false); // Simulating a delay
+      }, 1000);
+
+      // Handle responseData as needed
+    } catch (error) {
+      console.error('Failed to fetch data', error);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch('http://localhost:4002/products', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
+    setLoaderTime(true);
 
-        const responseData = await response.json();
-        console.log(responseData.data, 'responseData');
-        setProductsData(responseData.data);
-        // Handle responseData as needed
-      } catch (error) {
-        console.error('Failed to fetch data', error);
-      }
-    };
-
-    fetchData();
+    productsFetchData();
   }, []);
 
   const columns = useMemo(
     () => [
       {
-        accessorKey: 'product', //access nested data with dot notation
+        accessorKey: 'variant.path', //access nested data with dot notation
         header: 'Product',
         size: 80,
         Cell: ({ row }) => (
+          // let imgUrl = `http://localhost:4002/${row.original.variant.path}`
           <img
-            src={row.original.product}
+            src={`http://localhost:4002/${row.original.variant.path}`}
             alt="Product"
+            crossOrigin="anonymous"
             style={{ width: '30px', height: '30px', borderRadius: '50%' }}
           />
         ),
@@ -206,8 +219,29 @@ const ProductSidebar = () => {
         size: 80,
       },
       {
+        accessorKey: 'active', //access nested data with dot notation
+        header: 'Status',
+        size: 80,
+        Cell: ({ row }) => (
+          <Chip
+            label={row.original.active ? 'Active' : 'Draft'}
+            color={row.original.active ? 'success' : 'error'}
+          />
+        ),
+      },
+      {
         accessorKey: 'description',
         header: 'Description',
+        size: 80,
+        Cell: ({ row }) => (
+          <div dangerouslySetInnerHTML={{ __html: row.original.description }}>
+            {/* <p>{row.original.description}</p> */}
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'category.name',
+        header: 'Category',
         size: 80,
       },
     ],
@@ -227,6 +261,32 @@ const ProductSidebar = () => {
 
   const newProduct = () => {
     navigate('/newProduct');
+  };
+
+  const handleDelete = (id) => {
+    fetch(`http://localhost:4002/products?id=${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (data.status) {
+          productsFetchData();
+          showSuccessMsg('Product Deleted');
+        } else {
+          showErrorMsg('Product unable to delete');
+        }
+      })
+      .catch((error) => {
+        showErrorMsg('Product unable to delete');
+      });
   };
 
   return (
@@ -267,11 +327,15 @@ const ProductSidebar = () => {
                       <Stack
                         onClick={(e) => handleClick(index)}
                         direction="row"
-                        spacing={1}
+                        spacing={-0.5}
                         sx={{
                           justifyContent: menu ? 'start' : 'center',
-                          m: menu ? '0px' : '20px',
-                          p: menu ? '0px' : '5px',
+                          alignItems: 'center',
+                          width: menu ? '230px' : '38px',
+                          height: menu ? '32px' : '30px',
+                          m: menu ? '6px' : '20px',
+                          ml: menu ? '12px' : '18px',
+                          p: menu ? '20px' : '5px',
                           pl: menu ? '30px !important' : '5px !important',
                           backgroundColor: path === data.path ? 'white' : '',
                           color:
@@ -295,7 +359,9 @@ const ProductSidebar = () => {
                         <Tooltip title={data.title} arrow placement="right">
                           <img
                             src={data.icon}
-                            // style={{ marginTop: menu ? '0px' : '20px' }}
+                            style={{
+                              height: menu ? '20px' : '20px',
+                            }}
                             alt="item"
                           />
                         </Tooltip>
@@ -311,6 +377,11 @@ const ProductSidebar = () => {
                                 sx={{ color: 'black' }}
                                 primary={data.title}
                               />
+                              {data.subTitle?.length ? (
+                                <KeyboardArrowDownIcon />
+                              ) : (
+                                ''
+                              )}
                             </ListItem>
                           </NavLink>
                         ) : (
@@ -402,74 +473,91 @@ const ProductSidebar = () => {
             Products
           </Typography>
 
-          {productsData?.length ? (
-            <Box sx={{ width: '100%', mt: 2, ml: -1 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  mr: 3,
-                  mb: 2,
-                }}
-              >
-                <Button
-                  sx={{
-                    backgroundColor: 'black',
-                    color: 'white',
-                    borderRadius: '10px',
-                    '&:hover': {
-                      backgroundColor: 'black',
-                    },
-                    textTransform: 'none',
-                  }}
-                  onClick={newProduct}
-                >
-                  Add product
-                </Button>
-              </Box>
-              <Table columns={columns} data={productsData} />
+          {loaderTime ? (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Loader />
             </Box>
           ) : (
-            // <Box
-            //   sx={{
-            //     width: '98%',
-            //     height: '300px',
-            //     border: '1px solid #D3D3D3',
-            //     borderRadius: '15px',
-            //     mt: 3,
-            //     display: 'flex',
-            //     flexDirection: 'column',
-            //     alignItems: 'flex-start',
-            //   }}
-            // >
-            //   <Typography
-            //     sx={{ fontWeight: 'bold', fontSize: '20px', mt: 8, ml: 5 }}
-            //   >
-            //     Add your products
-            //   </Typography>
-            //   <Typography sx={{ fontSize: '13px', ml: 5 }}>
-            //     Start by stocking your store with products your customers will
-            //     love
-            //   </Typography>
-            //   <Button
-            //     size="small"
-            //     sx={{
-            //       backgroundColor: 'black',
-            //       color: 'white',
-            //       ml: 5,
-            //       mt: 2,
-            //       p: 1,
-            //       borderRadius: '10px',
-            //       '&:hover': {
-            //         backgroundColor: 'black',
-            //       },
-            //     }}
-            //     onClick={newProduct}
-            //   >
-            //     + Add product
-            //   </Button>
-            // </Box>
-            ''
+            <>
+              {productsData?.length ? (
+                <Box sx={{ width: '100%', mt: 2, ml: -1 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      mr: 3,
+                      mb: 2,
+                    }}
+                  >
+                    <Button
+                      sx={{
+                        backgroundColor: 'black',
+                        color: 'white',
+                        borderRadius: '10px',
+                        '&:hover': {
+                          backgroundColor: 'black',
+                        },
+                        textTransform: 'none',
+                      }}
+                      onClick={newProduct}
+                    >
+                      Add product
+                    </Button>
+                  </Box>
+                  <Table
+                    columns={columns}
+                    data={productsData}
+                    handleDelete={(id) => handleDelete(id)}
+                  />
+                </Box>
+              ) : (
+                <Box
+                  sx={{
+                    width: '98%',
+                    height: '300px',
+                    border: '1px solid #D3D3D3',
+                    borderRadius: '15px',
+                    mt: 3,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                  }}
+                >
+                  <Typography
+                    sx={{ fontWeight: 'bold', fontSize: '20px', mt: 8, ml: 5 }}
+                  >
+                    Add your products
+                  </Typography>
+                  <Typography sx={{ fontSize: '13px', ml: 5 }}>
+                    Start by stocking your store with products your customers
+                    will love
+                  </Typography>
+                  <Button
+                    size="small"
+                    sx={{
+                      backgroundColor: 'black',
+                      color: 'white',
+                      ml: 5,
+                      mt: 2,
+                      p: 1,
+                      borderRadius: '10px',
+                      '&:hover': {
+                        backgroundColor: 'black',
+                      },
+                    }}
+                    onClick={newProduct}
+                  >
+                    + Add product
+                  </Button>
+                </Box>
+              )}
+            </>
           )}
 
           {/* ----------------- */}

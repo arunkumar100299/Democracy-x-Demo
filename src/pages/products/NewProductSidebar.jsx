@@ -43,6 +43,7 @@ import { useDropzone } from 'react-dropzone';
 import ImageUpload from '../../components/ImageUpload';
 import { useGetApi, usePostApi } from '../../customHooks/useApi';
 import useSnackbarHook from '../../customHooks/useSnackbarHook';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 const productType = [
   {
@@ -171,49 +172,13 @@ const menuOptions = [
   },
 ];
 
-// const schema = yup.object().shape({
-//   title: yup.string().required('Title is required'),
-//   description: yup.string().required('Description is required'),
-//   status: yup
-//     .boolean()
-//     .typeError('Status is required')
-//     .transform((value, originalValue) => {
-//       return isNaN(originalValue) ? undefined : originalValue;
-//     })
-//     .required('Status is required'),
-//   category_id: yup
-//     .number()
-//     .typeError('Product Category is required')
-//     .transform((value, originalValue) => {
-//       return isNaN(originalValue) ? undefined : originalValue;
-//     })
-//     .required('Product Category is required'),
-//   price: yup.string().required('price is required'),
-//   cost_per_item: yup.string().required('Cost per item is required'),
-//   discount: yup
-//     .number()
-//     .typeError('Discount is required')
-//     .transform((value, originalValue) => {
-//       return isNaN(originalValue) ? undefined : originalValue;
-//     })
-//     .required('Discount is required'),
-//   price_after_discount: yup
-//     .string()
-//     .required('Price after discount is required'),
-//   profit: yup.string().required('Profit is required'),
-//   margin: yup.string().required('Margin is required'),
-//   qty: yup.string().required('Quantity is required'),
-//   // product_type: yup.boolean().required('Product type is required'),
-//   img: yup.mixed().required('Please select an image file'),
-// });
-
 const NewProductSidebar = () => {
   const schema = yup.object().shape({
     title: yup.string().required('Title is required'),
     status: yup.string().required('Status is required'),
     category_id: yup.string().required('Product category is required'),
     price: yup.string().required('Price is required'),
-    margin: yup.string().required('Margin is required'),
+    // margin: yup.string().required('Margin is required'),
     // cost_per_item: yup.string().required('Cost per item is required'),
     cost_per_item: yup
       .number()
@@ -238,11 +203,12 @@ const NewProductSidebar = () => {
       .required('Cost per item is required'),
 
     discount: yup.string().required('Discount is required'),
-    profit: yup.string().required('Profit is required'),
+    // profit: yup.string().required('Profit is required'),
     qty: yup.string().required('Quantity is required'),
-    price_after_discount: yup
-      .string()
-      .required('Price after discount is required'),
+    // editor: yup.string().required('Description is required'),
+    // price_after_discount: yup
+    //   .string()
+    //   .required('Price after discount is required'),
     // Add other fields and validations here
   });
 
@@ -397,21 +363,8 @@ const NewProductSidebar = () => {
       console.log(pair[0] + ', ' + pair[1]);
     }
 
-    // console.log(formData, 'formdata');
-    // const response = await post(formData);
-    // if (response.status) {
-    //   showSuccessMsg('Product Added Successfully !');
-
-    //   // navigate('/products');
-    // } else {
-    //   showErrorMsg('product unable to add');
-    // }
     fetch('http://localhost:4002/products', {
       method: 'POST',
-      // headers: {
-      //   Accept: 'application/json, application/xml, text/plain, text/html, .',
-      //   'Content-Type': 'multipart/formData',
-      // },
       body: formData,
     })
       .then((response) => response.json())
@@ -452,10 +405,9 @@ const NewProductSidebar = () => {
       <Box sx={{ display: 'flex' }}>
         <Box
           sx={{
-            // position: "fixed",
             backgroundColor: '#E7E8EF',
-            width: menu ? '20%' : '6%',
-            height: '230vh',
+            width: menu ? '21%' : '6%',
+            height: '244vh',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
@@ -485,11 +437,15 @@ const NewProductSidebar = () => {
                       <Stack
                         onClick={(e) => handleClick(index)}
                         direction="row"
-                        spacing={1}
+                        spacing={-0.5}
                         sx={{
                           justifyContent: menu ? 'start' : 'center',
-                          m: menu ? '0px' : '20px',
-                          p: menu ? '0px' : '5px',
+                          alignItems: 'center',
+                          width: menu ? '230px' : '38px',
+                          height: menu ? '32px' : '30px',
+                          m: menu ? '6px' : '20px',
+                          ml: menu ? '12px' : '18px',
+                          p: menu ? '20px' : '5px',
                           pl: menu ? '30px !important' : '5px !important',
                           backgroundColor: path === data.path ? 'white' : '',
                           color:
@@ -513,7 +469,9 @@ const NewProductSidebar = () => {
                         <Tooltip title={data.title} arrow placement="right">
                           <img
                             src={data.icon}
-                            // style={{ marginTop: menu ? '0px' : '20px' }}
+                            style={{
+                              height: menu ? '20px' : '20px',
+                            }}
                             alt="item"
                           />
                         </Tooltip>
@@ -529,6 +487,11 @@ const NewProductSidebar = () => {
                                 sx={{ color: 'black' }}
                                 primary={data.title}
                               />
+                              {data.subTitle?.length ? (
+                                <KeyboardArrowDownIcon />
+                              ) : (
+                                ''
+                              )}
                             </ListItem>
                           </NavLink>
                         ) : (
@@ -674,13 +637,17 @@ const NewProductSidebar = () => {
                       editor={ClassicEditor}
                       data={editorData}
                       onChange={(event, editor) => {
-                        const data = editor.getData();
+                        const data = editor.getData({
+                          ckeditor: true,
+                          html: true,
+                          filter: 'strict',
+                        });
+
                         setEditorData(data);
                       }}
                       config={{
                         placeholder: 'Enter your description here...',
                       }}
-                      style={{ height: '500px' }}
                     />
                   </Box>
                 </Box>
